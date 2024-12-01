@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"slices"
+	"strconv"
 	"testing"
 )
 
@@ -20,11 +21,13 @@ func BenchmarkTask1(b *testing.B) {
 		}
 	})
 
-	b.Run("Task1_Parse", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = Task1_Parse(filename)
-		}
-	})
+	for i := 10; i <= 50; i += 2 {
+		b.Run("Quicksort "+strconv.Itoa(i), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = Task1V2(filename, i)
+			}
+		})
+	}
 }
 
 func Task1_Parse(filename string) uint32 {
@@ -80,4 +83,18 @@ func Parsev2(input [5]byte) uint32 {
 		uint32(input[2]-byte('0'))*100 +
 		uint32(input[1]-byte('0'))*10 +
 		uint32(input[0]-byte('0'))*1
+}
+
+func FuzzParse(f *testing.F) {
+	f.Add(uint32(10000))
+	f.Add(uint32(99999))
+	f.Add(uint32(93341))
+	f.Fuzz(func(t *testing.T, i uint32) {
+		if i >= 10000 && i <= 99999 {
+			input := ([5]byte)([]byte(strconv.Itoa(int(i))))
+			if i != Parse(input) {
+				t.Errorf("%d got %d", i, Parse(input))
+			}
+		}
+	})
 }
