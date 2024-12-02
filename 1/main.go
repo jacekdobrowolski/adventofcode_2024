@@ -52,7 +52,7 @@ func main() {
 
 	start = time.Now()
 
-	result = Task2("input")
+	result = Task2NOIO(buf)
 
 	fmt.Printf("2 took: %v\n", time.Since(start))
 	fmt.Printf("2 ans: %d\n", result)
@@ -261,6 +261,33 @@ func Task2(filename string) uint32 {
 		if errors.Is(err, io.EOF) {
 			break
 		}
+	}
+
+	for num, aCount := range listA {
+
+		bCount, ok := listB[num]
+		if !ok {
+			bCount = 0
+		}
+		result += Parse(num) * uint32(aCount) * uint32(bCount)
+	}
+
+	return result
+}
+
+func Task2NOIO(buf []byte) uint32 {
+
+	var result uint32
+
+	listA := make(map[[5]byte]uint16, 1000)
+	listB := make(map[[5]byte]uint16, 1000)
+
+	linesAtOnce := len(buf) / lineLength
+
+	for i := range linesAtOnce {
+		i *= lineLength
+		listA[([5]byte)(buf[i+0:i+5])] += 1
+		listB[([5]byte)(buf[i+8:i+13])] += 1
 	}
 
 	for num, aCount := range listA {
