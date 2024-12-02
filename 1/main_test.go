@@ -21,13 +21,32 @@ func BenchmarkTask1(b *testing.B) {
 		}
 	})
 
-	for i := 10; i <= 50; i += 2 {
-		b.Run("Quicksort "+strconv.Itoa(i), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				_ = Task1V2(filename, i)
-			}
-		})
+	b.Run("Quicksort ", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = Task1V2(filename)
+		}
+	})
+
+	input, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
 	}
+	defer input.Close()
+
+	maxCapacity := lineLength * linesAtOnce
+
+	buf := make([]byte, maxCapacity)
+
+	_, err = input.Read(buf)
+	if errors.Is(err, io.EOF) {
+		log.Fatal()
+	}
+
+	b.Run("Task1_noio", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = Task1NOIO(buf)
+		}
+	})
 }
 
 func Task1_Parse(filename string) uint32 {

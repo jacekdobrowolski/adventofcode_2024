@@ -28,9 +28,24 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	input, err := os.Open("input")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer input.Close()
+
+	maxCapacity := lineLength * linesAtOnce
+
+	buf := make([]byte, maxCapacity)
+
+	_, err = input.Read(buf)
+	if errors.Is(err, io.EOF) {
+		log.Fatal()
+	}
+
 	start := time.Now()
 
-	result := Task1("input")
+	result := Task1NOIO(buf)
 
 	fmt.Printf("1 took: %v\n", time.Since(start))
 	fmt.Printf("1 ans: %d\n", result)
@@ -98,6 +113,37 @@ func Parse(input [5]byte) uint32 {
 		uint32(input[4]-byte('0'))*1
 }
 
+func Task1NOIO(buf []byte) uint32 {
+
+	listA := make([]uint32, 0, 1000)
+	listB := make([]uint32, 0, 1000)
+
+	linesAtOnce := len(buf) / lineLength
+
+	for i := range linesAtOnce {
+		i *= lineLength
+		listA = append(listA, Parse(([5]byte)(buf[i:i+5])))
+		listB = append(listB, Parse(([5]byte)(buf[i+8:i+13])))
+	}
+
+	slices.Sort(listA)
+	slices.Sort(listB)
+
+	var result uint32
+
+	for i := range listA {
+		var distance uint32
+		if listA[i] > listB[i] {
+			distance = listA[i] - listB[i]
+		} else {
+			distance = listB[i] - listA[i]
+		}
+
+		result += distance
+	}
+	return result
+}
+
 // InsertionSort function to sort small subarrays
 func InsertionSort(arr []uint32) {
 	for i := 1; i < len(arr); i++ {
@@ -113,22 +159,18 @@ func InsertionSort(arr []uint32) {
 	}
 }
 
-// QuickSort function to sort the array
 func QuickSort(arr []uint32) {
 	if len(arr) <= 1 {
 		return
 	}
 
-	// If array length is 10 or less, use InsertionSort
-	if len(arr) <= 26 {
+	if len(arr) <= 18 {
 		InsertionSort(arr)
 		return
 	}
 
-	// Choose pivot (here we use the last element as pivot)
 	pivot := arr[len(arr)-1]
 
-	// Partitioning step
 	i := -1
 	for j := 0; j < len(arr)-1; j++ {
 		if arr[j] <= pivot {
@@ -137,7 +179,6 @@ func QuickSort(arr []uint32) {
 		}
 	}
 
-	// Place pivot in the correct position
 	arr[i+1], arr[len(arr)-1] = arr[len(arr)-1], arr[i+1]
 
 	// Recursively apply QuickSort on left and right partitions
