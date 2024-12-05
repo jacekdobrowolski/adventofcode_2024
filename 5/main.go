@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const ITERATIONS = 10_000
+const ITERATIONS = 1
 
 //go:embed input
 var input []byte
@@ -72,6 +72,46 @@ func main() {
 	fmt.Printf("day 5 part 1 took %v\n", minTook)
 	fmt.Printf("day 5 part 1 result %d\n", result)
 
+	for range ITERATIONS {
+		start := time.Now()
+
+		rulebook, manuals := ParseInput(input)
+		result = 0
+		results := make(chan int)
+
+		go func() {
+			for res := range results {
+				result += res
+			}
+		}()
+
+		// wg := sync.WaitGroup{}
+
+		for _, manual := range manuals {
+			// wg.Add(1)
+			// go func() {
+			// 	defer wg.Done()
+
+			if !Valid(manual, rulebook) {
+				PrintManual(manual)
+			}
+
+			if Fixed(manual, rulebook) {
+				PrintManual(manual)
+				results <- ParseNum(manual[len(manual)/2])
+			}
+			// }()
+		}
+		// wg.Wait()
+		close(results)
+
+		took := time.Since(start)
+		if took < minTook {
+			minTook = took
+		}
+	}
+	fmt.Printf("day 5 part 2 took %v\n", minTook)
+	fmt.Printf("day 5 part 2 result %d\n", result)
 }
 func ParseNum(num Num) int {
 	return 10*int(num[0]-'0') + int(num[1]-'0')
@@ -86,6 +126,50 @@ func Valid(m Manual, rulebook map[Num][]Num) bool {
 		if pages, ok := rulebook[page]; ok {
 			forbidenPages = append(forbidenPages, pages...)
 		}
+	}
+
+	return true
+}
+
+func Fixed(m Manual, rulebook map[Num][]Num) bool {
+	forbidenPages := make([]Num, 0, 29*24)
+	wrongOrder := false
+
+	for _, page := range m {
+		if slices.Contains(forbidenPages, page) {
+			wrongOrder = true
+		}
+
+		if pages, ok := rulebook[page]; ok {
+			forbidenPages = append(forbidenPages, pages...)
+		}
+	}
+
+	if !wrongOrder {
+		return false
+	}
+
+	for !Valid(m, rulebook) {
+		forbidenPages := make([][]Num, 0, 29*24)
+	INNER:
+		for i := 1; i < len(m); i += 1 {
+			fmt.Println(i)
+			page := m[i]
+			for _, fp := range forbidenPages {
+				if slices.Contains(fp, page) {
+					m[i-1], m[i] = m[i], m[i-1]
+					i -= 2
+					forbidenPages = forbidenPages[:len(forbidenPages)-1]
+					PrintManual(m)
+					continue INNER
+				}
+			}
+
+			if pages, ok := rulebook[page]; ok {
+				forbidenPages = append(forbidenPages, pages)
+			}
+		}
+		PrintManual(m)
 	}
 
 	return true
@@ -151,9 +235,13 @@ func PrintRuleBook(r map[Num][]Num) {
 func PrintManuals(m []Manual) {
 	for i, manual := range m {
 		fmt.Printf("%d - ", i)
-		for _, item := range manual {
-			fmt.Printf("%s, ", item)
-		}
-		fmt.Printf("\n")
+		PrintManual(manual)
 	}
+}
+
+func PrintManual(manual Manual) {
+	for _, item := range manual {
+		fmt.Printf("%s, ", item)
+	}
+	fmt.Printf("\n")
 }
