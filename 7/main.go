@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"runtime/pprof"
 	"strconv"
@@ -144,10 +145,7 @@ func Valid2(goal, value int, numbers []int) bool {
 	for _, num := range numbers {
 		a := Valid2(goal, value+num, numbers[1:])
 		b := Valid2(goal, value*num, numbers[1:])
-		cValue, err := strconv.Atoi(strconv.Itoa(value) + strconv.Itoa(num))
-		if err != nil {
-			fmt.Printf("err converting %v, %v", value, num)
-		}
+		cValue := value*int(math.Pow10(int(math.Floor(math.Log10(float64(num)))))+1) + num
 		c := Valid2(goal, cValue, numbers[1:])
 
 		return a || b || c
