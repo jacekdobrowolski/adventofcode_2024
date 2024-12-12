@@ -11,34 +11,37 @@ import (
 func main() {
 	input := "92 0 286041 8034 34394 795 8 2051489"
 	stonesStr := strings.Split(input, " ")
-	stones := make([]int, 0, len(stonesStr))
+	stones := make(map[int]int)
 
 	for _, stoneStr := range stonesStr {
 		stone, err := strconv.Atoi(stoneStr)
 		if err != nil {
 			log.Fatal(err)
 		}
-		stones = append(stones, stone)
+		stones[stone]++
 	}
 
-	var newStones []int
-
 	for i := range 75 {
-
-		newStones = make([]int, 0, len(stones))
-		for _, stone := range stones {
+		newStones := make(map[int]int)
+		for stone, count := range stones {
 			result := Blink(stone)
 			if result[0] == 0 {
-				newStones = append(newStones, result[1])
+				newStones[result[1]] += count
 			} else {
-				newStones = append(newStones, result[0], result[1])
+				newStones[result[0]] += count
+				newStones[result[1]] += count
 			}
 		}
 		fmt.Println(i)
 		stones = newStones
 	}
+	result := 0
 
-	fmt.Println(len(newStones))
+	for _, sum := range stones {
+		result += sum
+	}
+
+	fmt.Println(result)
 }
 
 func Blink(stone int) [2]int {
